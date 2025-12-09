@@ -7,10 +7,10 @@ class OtpService {
     return crypto.randomInt(100000, 999999).toString();
   }
 
-  // Get OTP expiration time (5 minutes from now)
+  // Get OTP expiration time (1 minute from now)
   static getExpirationTime() {
     const expiryTime = new Date();
-    expiryTime.setMinutes(expiryTime.getMinutes() + 5);
+    expiryTime.setMinutes(expiryTime.getMinutes() + 1); // Changed to 1 minute
     return expiryTime;
   }
 

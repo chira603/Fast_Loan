@@ -48,7 +48,7 @@ class SmsService {
 
   // Send OTP via SMS
   async sendOTP(phone, otpCode) {
-    const message = `Your Fast Loan verification code is: ${otpCode}. Valid for 5 minutes. Do not share this code with anyone.`;
+    const message = `Fast Loan Verification\n\nYour OTP: ${otpCode}\n\nValid for 1 minute only.\n\nDo not share this code with anyone.\n\n- Fast Loan Team`;
 
     if (this.provider === 'twilio') {
       return await this.sendViaTwilio(phone, message);
