@@ -4,15 +4,18 @@
 ![Version](https://img.shields.io/badge/version-1.0.0-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
-**FAST LOAN** is a professional, full-stack web application for providing small personal loans up to $5,000. Built with React, Node.js/Express, and PostgreSQL, it offers a complete loan management system with features like EMI calculation, CIBIL score checking, user authentication, and admin oversight.
+**FAST LOAN** is a professional, full-stack web application for providing personal loans up to ₹5,00,000 for Indian users. Built with React, Node.js/Express, and PostgreSQL, it offers a complete loan management system with features like EMI calculation, mobile recharge, bill payments, Razorpay integration, and admin oversight.
 
 ## 🌟 Features
 
 ### User Features
 - **User Authentication**: Secure login/register with JWT tokens
-- **EMI Calculator**: Interactive calculator with visualizations
+- **EMI Calculator**: Interactive calculator with Indian Rupee visualizations
 - **Loan Application**: Multi-step loan application process
-- **CIBIL Score Check**: Credit score checking with detailed analysis
+- **Mobile Recharge**: Airtel, Jio, Vi, BSNL with realistic Indian plans
+- **Bill Payment**: Electricity, Water, Gas bill payments
+- **DTH Recharge**: Tata Sky, Airtel Digital TV, Dish TV, Sun Direct
+- **Razorpay Integration**: Multiple payment methods (Card, UPI, Netbanking)
 - **Dashboard**: View loans, payments, and status
 - **Contact Form**: Customer support integration
 - **Profile Management**: Update personal information
@@ -24,21 +27,10 @@
 - **Contact Management**: Handle customer inquiries
 
 ### Technical Features
-- **Responsive Design**: Mobile-first approach
-- **Real-time Validation**: Form validation with Yup
-- **State Management**: Redux Toolkit
-- **API Integration**: RESTful API with Axios
-- **Security**: bcrypt password hashing, JWT authentication
-- **Database**: PostgreSQL with proper indexing
-- **Charts**: Interactive visualizations with Chart.js
 
 ## 📋 Prerequisites
 
 Before you begin, ensure you have the following installed:
-- **Node.js** (v18 or higher)
-- **PostgreSQL** (v12 or higher)
-- **npm** or **yarn** package manager
-- **Git**
 
 ## 🚀 Quick Start
 
@@ -48,6 +40,32 @@ Before you begin, ensure you have the following installed:
 git clone https://github.com/yourusername/FastLoan.git
 cd FastLoan
 ```
+
+## Payments & Razorpay Integration
+
+Razorpay is integrated for test-mode payments (orders + checkout + verification).
+
+### Backend env
+
+Create `backend/.env` with:
+
+```
+RAZORPAY_KEY_ID=rzp_test_xxxxxxxxx
+RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxx
+```
+
+### Flow
+
+1. Frontend calls `POST /api/v1/payments/razorpay/order` with `{ amount, purpose }`
+2. Backend creates order via Razorpay SDK and returns `{ keyId, orderId, amount }`
+3. Frontend opens Razorpay Checkout using `window.Razorpay`
+4. On success, frontend posts to `POST /api/v1/payments/razorpay/verify` with signature payload and amount
+5. Backend verifies signature and records payment in DB
+
+### Frontend usage
+
+See `src/services/razorpay.js` for helpers to create order, open checkout, and verify payment.
+
 
 ### 2. Database Setup
 

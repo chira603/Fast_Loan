@@ -44,16 +44,16 @@ INSERT INTO payments (loan_id, amount, payment_date, status, transaction_id, pay
 -- Insert Sample Contact Submissions
 INSERT INTO contacts (user_id, name, email, message, submitted_at, resolved) VALUES
 (2, 'John Doe', 'john.doe@email.com', 'I have a question about my loan application status. Can you please provide an update?', CURRENT_TIMESTAMP - INTERVAL '3 days', true),
-(NULL, 'Sarah Williams', 'sarah.w@email.com', 'What are the eligibility criteria for a $4000 loan? I would like to apply.', CURRENT_TIMESTAMP - INTERVAL '1 day', false),
+(NULL, 'Sarah Williams', 'sarah.w@email.com', 'What are the eligibility criteria for a ₹4,00,000 loan? I would like to apply.', CURRENT_TIMESTAMP - INTERVAL '1 day', false),
 (3, 'Jane Doe', 'jane.doe@email.com', 'Thank you for the quick approval! The process was very smooth.', CURRENT_TIMESTAMP - INTERVAL '10 days', true);
 
 -- Insert Sample Notifications
 INSERT INTO notifications (user_id, title, message, type, read) VALUES
-(2, 'Loan Approved', 'Your loan application #1 for $3000 has been approved!', 'loan_approval', true),
-(2, 'Payment Due', 'Your EMI payment of $266.07 is due on January 7, 2026.', 'payment_reminder', false),
-(3, 'Loan Disbursed', 'Your loan amount of $5000 has been disbursed to your account.', 'loan_disbursement', true),
+(2, 'Loan Approved', 'Your loan application #1 for ₹3,00,000 has been approved!', 'loan_approval', true),
+(2, 'Payment Due', 'Your EMI payment of ₹26,607 is due on January 7, 2026.', 'payment_reminder', false),
+(3, 'Loan Disbursed', 'Your loan amount of ₹5,00,000 has been disbursed to your account.', 'loan_disbursement', true),
 (4, 'Application Received', 'We have received your loan application and it is under review.', 'application_status', true),
-(5, 'Loan Approved', 'Your loan application #4 for $4500 has been approved!', 'loan_approval', false);
+(5, 'Loan Approved', 'Your loan application #4 for ₹4,50,000 has been approved!', 'loan_approval', false);
 
 -- Insert Sample Audit Logs
 INSERT INTO audit_logs (user_id, action, table_name, record_id, ip_address) VALUES

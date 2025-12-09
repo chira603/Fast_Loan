@@ -13,7 +13,7 @@ const Footer = () => {
           <div>
             <h3 className="text-xl font-bold text-primary-500 mb-4">FAST LOAN</h3>
             <p className="text-neutral-300 text-sm mb-4">
-              Quick personal loans up to $5,000 with competitive rates and fast approval. Your trusted financial partner.
+              Quick personal loans up to ₹5,00,000 with competitive rates and fast approval. Your trusted financial partner for India.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-neutral-300 hover:text-primary-500 transition-colors">

@@ -8,7 +8,7 @@ import {
   Calendar, 
   Briefcase, 
   Building, 
-  DollarSign, 
+  IndianRupee, 
   CreditCard, 
   Users, 
   Shield,
@@ -65,7 +65,8 @@ const Profile = () => {
     try {
       setLoading(true);
       const response = await api.get('/api/v1/profile');
-      const userData = response.data.data;
+      // API interceptor already returns response.data, so we access .data directly
+      const userData = response.data || response;
       
       setFormData({
         full_name: userData.full_name || '',
@@ -91,9 +92,10 @@ const Profile = () => {
         upi_id: userData.upi_id || '',
       });
     } catch (error) {
+      console.error('Profile fetch error:', error);
       setMessage({ 
         type: 'error', 
-        text: error.response?.data?.message || 'Failed to load profile' 
+        text: error.message || 'Failed to load profile' 
       });
     } finally {
       setLoading(false);
@@ -119,8 +121,11 @@ const Profile = () => {
       
       const response = await api.put('/api/v1/profile', updateData);
       
+      // API interceptor already returns response.data, so we access .data directly
+      const updatedUserData = response.data || response;
+      
       // Update user in Redux store and localStorage
-      const updatedUser = { ...user, ...response.data.data };
+      const updatedUser = { ...user, ...updatedUserData };
       dispatch(setUser(updatedUser));
       localStorage.setItem('user', JSON.stringify(updatedUser));
       
@@ -130,9 +135,10 @@ const Profile = () => {
       // Clear message after 3 seconds
       setTimeout(() => setMessage({ type: '', text: '' }), 3000);
     } catch (error) {
+      console.error('Profile update error:', error);
       setMessage({ 
         type: 'error', 
-        text: error.response?.data?.message || 'Failed to update profile' 
+        text: error.message || 'Failed to update profile' 
       });
     } finally {
       setLoading(false);
@@ -444,7 +450,7 @@ const Profile = () => {
                   Annual Income (₹)
                 </label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="number"
                     name="annual_income"

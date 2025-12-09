@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS loans CASCADE;
 DROP TABLE IF EXISTS contacts CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS audit_logs CASCADE;
+DROP TABLE IF EXISTS otps CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
 -- Create ENUM types
@@ -37,6 +38,23 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- OTPs Table (One-Time Passwords for Email/Phone Verification)
+CREATE TABLE IF NOT EXISTS otps (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(100),
+    phone VARCHAR(20),
+    otp_code VARCHAR(6) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    verified BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT email_or_phone_required CHECK (email IS NOT NULL OR phone IS NOT NULL)
+);
+
+-- Create index for faster OTP lookups
+CREATE INDEX IF NOT EXISTS idx_otps_email ON otps(email) WHERE email IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_otps_phone ON otps(phone) WHERE phone IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_otps_expires_at ON otps(expires_at);
 
 -- Loans Table (Loan Applications and Details)
 CREATE TABLE IF NOT EXISTS loans (

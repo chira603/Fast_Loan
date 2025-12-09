@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import { FaBolt, FaTint, FaFire } from 'react-icons/fa';
 import { formatCurrency } from '../utils/emiCalculator';
+import { createRazorpayOrder, openRazorpayCheckout, verifyRazorpayPayment } from '../services/razorpay';
 
 const BillPayment = () => {
   const [category, setCategory] = useState('ELECTRICITY');
@@ -66,6 +67,49 @@ const BillPayment = () => {
       setSelectedOperator('');
       setProcessing(false);
     }, 1500);
+  };
+
+  const payBillWithRazorpay = async () => {
+    if (!billDetails) {
+      toast.warn('Please fetch bill details first');
+      return;
+    }
+    setProcessing(true);
+    try {
+      const purpose = `${category} Bill Payment`;
+      const orderRes = await createRazorpayOrder(billDetails.billAmount, purpose, {
+        billNumber: billDetails.billNumber,
+        accountNumber: billDetails.accountNumber,
+        operator: billDetails.operatorName,
+      });
+      const { keyId, orderId, amount: amountInPaise } = orderRes;
+
+      const checkoutRes = await openRazorpayCheckout({
+        keyId,
+        orderId,
+        amount: amountInPaise,
+        currency: 'INR',
+        name: 'FAST LOAN',
+        description: `${purpose} - ${billDetails.operatorName}`,
+        notes: {
+          accountNumber: billDetails.accountNumber,
+          billNumber: billDetails.billNumber,
+        },
+      });
+
+      await verifyRazorpayPayment({
+        razorpay_order_id: checkoutRes.razorpay_order_id,
+        razorpay_payment_id: checkoutRes.razorpay_payment_id,
+        razorpay_signature: checkoutRes.razorpay_signature,
+        amount: billDetails.billAmount,
+      });
+
+      toast.success('Payment successful! Processing bill payment...');
+      await handlePayBill();
+    } catch (err) {
+      toast.error(err.message || 'Payment failed');
+      setProcessing(false);
+    }
   };
 
   return (
@@ -164,13 +208,22 @@ const BillPayment = () => {
                 </div>
               </div>
 
-              <button
-                onClick={handlePayBill}
-                disabled={processing}
-                className="btn-primary w-full text-lg py-3"
-              >
-                {processing ? 'Processing...' : `Pay ${formatCurrency(billDetails.billAmount)}`}
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={handlePayBill}
+                  disabled={processing}
+                  className="btn-outline w-full text-lg py-3"
+                >
+                  {processing ? 'Processing...' : 'Pay via Balance'}
+                </button>
+                <button
+                  onClick={payBillWithRazorpay}
+                  disabled={processing}
+                  className="btn-primary w-full text-lg py-3"
+                >
+                  {processing ? 'Processing...' : 'Pay with Razorpay'}
+                </button>
+              </div>
             </div>
           )}
 

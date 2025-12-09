@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { FaMobileAlt, FaSatelliteDish, FaHistory, FaPhone } from 'react-icons/fa';
+import { FaMobileAlt, FaSatelliteDish, FaHistory } from 'react-icons/fa';
 import { 
   detectOperator, 
   getRechargePlans, 
@@ -10,10 +10,11 @@ import {
   processDTHRecharge,
   getRechargeHistory 
 } from '../services/rechargeService';
+import { createRazorpayOrder, openRazorpayCheckout, verifyRazorpayPayment } from '../services/razorpay';
 import { formatCurrency } from '../utils/emiCalculator';
 
 const Recharge = () => {
-  const [activeTab, setActiveTab] = useState('mobile'); // 'mobile' or 'dth'
+  const [activeTab, setActiveTab] = useState('mobile');
   const [mobile, setMobile] = useState('');
   const [operator, setOperator] = useState(null);
   const [manualOperator, setManualOperator] = useState('');
@@ -23,18 +24,15 @@ const Recharge = () => {
   const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
   
-  // DTH state
   const [dthOperators, setDthOperators] = useState([]);
   const [selectedDthOperator, setSelectedDthOperator] = useState('');
   const [dthNumber, setDthNumber] = useState('');
   const [dthPlans, setDthPlans] = useState([]);
   const [selectedDthPlan, setSelectedDthPlan] = useState(null);
 
-  // History
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState([]);
 
-  // Available mobile operators
   const mobileOperators = [
     { code: 'AIRTEL', name: 'Airtel' },
     { code: 'JIO', name: 'Jio' },
@@ -42,7 +40,6 @@ const Recharge = () => {
     { code: 'BSNL', name: 'BSNL' }
   ];
 
-  // Categories
   const categories = [
     { code: 'POPULAR', name: 'Popular', icon: '🔥' },
     { code: 'RECOMMENDED', name: 'Recommended', icon: '⭐' },
@@ -51,7 +48,6 @@ const Recharge = () => {
     { code: 'LONG_TERM', name: 'Long Term', icon: '📅' },
   ];
 
-  // Load DTH operators on mount
   useEffect(() => {
     if (activeTab === 'dth') {
       loadDTHOperators();
@@ -67,7 +63,6 @@ const Recharge = () => {
     }
   };
 
-  // Detect operator when mobile number is entered
   const handleMobileChange = async (value) => {
     setMobile(value);
     setOperator(null);
@@ -92,7 +87,6 @@ const Recharge = () => {
     }
   };
 
-  // Handle manual operator selection
   const handleManualOperatorChange = async (operatorCode) => {
     setManualOperator(operatorCode);
     if (mobile.length === 10 && operatorCode) {
@@ -157,7 +151,6 @@ const Recharge = () => {
       });
 
       toast.success('Recharge successful! ✅');
-      // Reset form
       setMobile('');
       setOperator(null);
       setManualOperator('');
@@ -187,7 +180,6 @@ const Recharge = () => {
       });
 
       toast.success('DTH recharge successful! ✅');
-      // Reset form
       setDthNumber('');
       setSelectedDthOperator('');
       setDthPlans([]);
@@ -210,10 +202,81 @@ const Recharge = () => {
   };
 
   const filteredPlans = plans.filter(p => p.category === selectedCategory);
+  
+  const payWithRazorpayMobile = async () => {
+    if (!selectedPlan || !manualOperator || mobile.length !== 10) {
+      toast.warn('Please enter number, select operator and plan');
+      return;
+    }
+    setProcessing(true);
+    try {
+      const purpose = 'Mobile Recharge';
+      const orderRes = await createRazorpayOrder(selectedPlan.amount, purpose, { operator: manualOperator, mobile });
+      const { keyId, orderId, amount: amountInPaise } = orderRes;
+
+      const checkoutRes = await openRazorpayCheckout({
+        keyId,
+        orderId,
+        amount: amountInPaise,
+        currency: 'INR',
+        name: 'FAST LOAN',
+        description: `${purpose} - ${manualOperator}`,
+        notes: { mobile, operator: manualOperator },
+      });
+
+      await verifyRazorpayPayment({
+        razorpay_order_id: checkoutRes.razorpay_order_id,
+        razorpay_payment_id: checkoutRes.razorpay_payment_id,
+        razorpay_signature: checkoutRes.razorpay_signature,
+        amount: parseFloat(selectedPlan.amount),
+      });
+
+      toast.success('Payment successful! Processing recharge...');
+      await handleMobileRecharge();
+    } catch (err) {
+      toast.error(err.message || 'Payment failed');
+      setProcessing(false);
+    }
+  };
+
+  const payWithRazorpayDTH = async () => {
+    if (!selectedDthPlan || !dthNumber || !selectedDthOperator) {
+      toast.warn('Please fill all fields and select a plan');
+      return;
+    }
+    setProcessing(true);
+    try {
+      const purpose = 'DTH Recharge';
+      const orderRes = await createRazorpayOrder(selectedDthPlan.amount, purpose, { operator: selectedDthOperator, dthNumber });
+      const { keyId, orderId, amount: amountInPaise } = orderRes;
+
+      const checkoutRes = await openRazorpayCheckout({
+        keyId,
+        orderId,
+        amount: amountInPaise,
+        currency: 'INR',
+        name: 'FAST LOAN',
+        description: `${purpose} - ${selectedDthOperator}`,
+        notes: { dthNumber, operator: selectedDthOperator },
+      });
+
+      await verifyRazorpayPayment({
+        razorpay_order_id: checkoutRes.razorpay_order_id,
+        razorpay_payment_id: checkoutRes.razorpay_payment_id,
+        razorpay_signature: checkoutRes.razorpay_signature,
+        amount: parseFloat(selectedDthPlan.amount),
+      });
+
+      toast.success('Payment successful! Processing recharge...');
+      await handleDTHRecharge();
+    } catch (err) {
+      toast.error(err.message || 'Payment failed');
+      setProcessing(false);
+    }
+  };
 
   return (
     <div className="container-custom py-8">
-      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold text-neutral-800">Recharge & Bill Payment</h1>
@@ -228,7 +291,6 @@ const Recharge = () => {
         </button>
       </div>
 
-      {/* Tabs */}
       <div className="flex space-x-4 mb-6 border-b">
         <button
           onClick={() => setActiveTab('mobile')}
@@ -254,10 +316,8 @@ const Recharge = () => {
         </button>
       </div>
 
-      {/* Mobile Recharge Tab */}
       {activeTab === 'mobile' && (
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Left: Mobile Input */}
           <div className="card">
             <h2 className="text-xl font-bold mb-4 flex items-center">
               <FaMobileAlt className="mr-2 text-primary-500" />
@@ -276,7 +336,6 @@ const Recharge = () => {
               />
             </div>
 
-            {/* Manual Operator Selection */}
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2">Select Operator</label>
               <select
@@ -325,22 +384,30 @@ const Recharge = () => {
                   {selectedPlan.benefits.sms && <p>💬 SMS: {selectedPlan.benefits.sms}</p>}
                   {selectedPlan.validity && <p>⏱️ Validity: {selectedPlan.validity}</p>}
                 </div>
-                <button
-                  onClick={handleMobileRecharge}
-                  disabled={processing}
-                  className="btn-primary w-full mt-4"
-                >
-                  {processing ? 'Processing...' : `Recharge ${formatCurrency(selectedPlan.amount)}`}
-                </button>
+                
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={handleMobileRecharge}
+                    disabled={processing}
+                    className="btn-outline w-full"
+                  >
+                    {processing ? 'Processing...' : 'Recharge via Balance'}
+                  </button>
+                  <button
+                    onClick={payWithRazorpayMobile}
+                    disabled={processing}
+                    className="btn-primary w-full"
+                  >
+                    {processing ? 'Processing...' : 'Pay with Razorpay'}
+                  </button>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Right: Plans */}
           <div>
             {plans.length > 0 && (
               <>
-                {/* Category Tabs */}
                 <div className="flex flex-wrap gap-2 mb-4">
                   {categories.map(cat => (
                     <button
@@ -357,7 +424,6 @@ const Recharge = () => {
                   ))}
                 </div>
 
-                {/* Plans Grid */}
                 <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
                   {filteredPlans.map(plan => (
                     <div
@@ -402,7 +468,6 @@ const Recharge = () => {
         </div>
       )}
 
-      {/* DTH Recharge Tab */}
       {activeTab === 'dth' && (
         <div className="grid lg:grid-cols-2 gap-8">
           <div className="card">
@@ -443,13 +508,23 @@ const Recharge = () => {
                 <p className="text-sm text-neutral-700 mt-1">{selectedDthPlan.planName}</p>
                 <p className="text-xs text-neutral-600 mt-2">{selectedDthPlan.description}</p>
                 <p className="text-xs text-neutral-600 mt-1">Validity: {selectedDthPlan.validity}</p>
-                <button
-                  onClick={handleDTHRecharge}
-                  disabled={processing}
-                  className="btn-primary w-full mt-4"
-                >
-                  {processing ? 'Processing...' : `Recharge ${formatCurrency(selectedDthPlan.amount)}`}
-                </button>
+                
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={handleDTHRecharge}
+                    disabled={processing}
+                    className="btn-outline w-full"
+                  >
+                    {processing ? 'Processing...' : 'Recharge via Balance'}
+                  </button>
+                  <button
+                    onClick={payWithRazorpayDTH}
+                    disabled={processing}
+                    className="btn-primary w-full"
+                  >
+                    {processing ? 'Processing...' : 'Pay with Razorpay'}
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -484,7 +559,6 @@ const Recharge = () => {
         </div>
       )}
 
-      {/* History Modal */}
       {showHistory && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">

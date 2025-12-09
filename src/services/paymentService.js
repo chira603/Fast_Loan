@@ -7,3 +7,7 @@ export const getPaymentsByLoan = async (loanId) => {
 export const getPaymentsByUser = async () => {
   return await api.get('/payments/user');
 };
+
+export const makePayment = async (paymentData) => {
+  return await api.post('/payments', paymentData);
+};

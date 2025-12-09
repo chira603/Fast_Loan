@@ -10,7 +10,7 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 const Home = () => {
   const { isAuthenticated } = useSelector((state) => state.auth);
-  const [amount, setAmount] = useState(3000);
+  const [amount, setAmount] = useState(100000);
   const [tenure, setTenure] = useState(12);
   const [interestRate] = useState(parseFloat(import.meta.env.VITE_DEFAULT_INTEREST_RATE) || 12);
 
@@ -68,9 +68,9 @@ const Home = () => {
         <div className="container-custom">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h1 className="text-5xl font-bold mb-6">Get Fast Loans Up to $5,000</h1>
+              <h1 className="text-5xl font-bold mb-6">Get Fast Loans Up to ₹5,00,000</h1>
               <p className="text-xl mb-8 text-primary-50">
-                Quick approval, low rates, and flexible repayment options. Your trusted financial partner.
+                Quick approval, low rates, and flexible repayment options. Your trusted financial partner for India.
               </p>
               <div className="flex space-x-4">
                 {isAuthenticated ? (
@@ -105,16 +105,16 @@ const Home = () => {
                 </label>
                 <input
                   type="range"
-                  min="100"
-                  max="5000"
-                  step="100"
+                  min="10000"
+                  max="500000"
+                  step="5000"
                   value={amount}
                   onChange={(e) => setAmount(parseFloat(e.target.value))}
                   className="w-full"
                 />
                 <div className="flex justify-between text-sm text-neutral-500 mt-1">
-                  <span>$100</span>
-                  <span>$5,000</span>
+                  <span>₹10,000</span>
+                  <span>₹5,00,000</span>
                 </div>
               </div>
 

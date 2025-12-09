@@ -73,7 +73,7 @@ const Dashboard = () => {
             </div>
             <div>
               <h3 className="text-xl font-semibold text-neutral-800">Apply for New Loan</h3>
-              <p className="text-neutral-600">Get instant approval up to $5,000</p>
+              <p className="text-neutral-600">Get instant approval up to ₹5,00,000</p>
             </div>
           </div>
         </Link>

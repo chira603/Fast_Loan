@@ -12,7 +12,7 @@ router.post(
   '/',
   protect,
   [
-    body('amount').isFloat({ min: 100, max: 5000 }).withMessage('Loan amount must be between $100 and $5000'),
+    body('amount').isFloat({ min: 10000, max: 500000 }).withMessage('Loan amount must be between ₹10,000 and ₹5,00,000'),
     body('tenure_months').isInt({ min: 3, max: 36 }).withMessage('Tenure must be between 3 and 36 months'),
     body('interest_rate').isFloat({ min: 0 }).withMessage('Valid interest rate required'),
     body('emi').isFloat({ min: 0 }).withMessage('Valid EMI amount required'),

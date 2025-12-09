@@ -47,10 +47,10 @@ alice.j@email.com   / password123
 
 ### 1. Homepage (http://localhost:3001/)
 - ✅ Try the **EMI Calculator**
-  - Adjust loan amount: $100 - $5,000
+  - Adjust loan amount: ₹10,000 - ₹5,00,000
   - Change tenure: 3 - 36 months
   - See real-time calculations with charts
-  - View principal vs interest breakdown
+  - View principal vs interest breakdown in Indian Rupees
 
 ### 2. Register/Login
 - ✅ Register a **new account**

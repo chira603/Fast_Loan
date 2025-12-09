@@ -78,13 +78,13 @@ export const calculateLoanCost = (principal, annualRate, tenureMonths) => {
  * Validate loan amount
  */
 export const validateLoanAmount = (amount) => {
-  const min = parseFloat(import.meta.env.VITE_MIN_LOAN_AMOUNT) || 100;
-  const max = parseFloat(import.meta.env.VITE_MAX_LOAN_AMOUNT) || 5000;
+  const min = parseFloat(import.meta.env.VITE_MIN_LOAN_AMOUNT) || 10000;
+  const max = parseFloat(import.meta.env.VITE_MAX_LOAN_AMOUNT) || 500000;
   
   if (isNaN(amount) || amount < min || amount > max) {
     return {
       valid: false,
-      message: `Loan amount must be between $${min} and $${max}`,
+      message: `Loan amount must be between ₹${min.toLocaleString('en-IN')} and ₹${max.toLocaleString('en-IN')}`,
     };
   }
   
@@ -109,13 +109,14 @@ export const validateTenure = (months) => {
 };
 
 /**
- * Format currency
+ * Format currency in Indian Rupees
  */
-export const formatCurrency = (amount, currency = 'USD') => {
-  return new Intl.NumberFormat('en-US', {
+export const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('en-IN', {
     style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 2,
+    currency: 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(amount);
 };
 

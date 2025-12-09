@@ -52,3 +52,35 @@ export const isAdmin = () => {
   const user = getUserFromStorage();
   return user && user.role === 'admin';
 };
+
+// OTP Services
+
+// Send OTP to email
+export const sendEmailOTP = async (email, userName) => {
+  return await api.post('/otp/send-email', { email, userName });
+};
+
+// Send OTP to phone
+export const sendSmsOTP = async (phone) => {
+  return await api.post('/otp/send-sms', { phone });
+};
+
+// Verify email OTP
+export const verifyEmailOTP = async (email, otp) => {
+  return await api.post('/otp/verify-email', { email, otp });
+};
+
+// Verify phone OTP
+export const verifySmsOTP = async (phone, otp) => {
+  return await api.post('/otp/verify-sms', { phone, otp });
+};
+
+// Resend email OTP
+export const resendEmailOTP = async (email, userName) => {
+  return await api.post('/otp/resend-email', { email, userName });
+};
+
+// Resend SMS OTP
+export const resendSmsOTP = async (phone) => {
+  return await api.post('/otp/resend-sms', { phone });
+};
