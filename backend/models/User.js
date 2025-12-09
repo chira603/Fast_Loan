@@ -29,6 +29,7 @@ class User {
              pan_number, aadhar_number, emergency_contact_name, emergency_contact_phone,
              emergency_contact_relation, aadhar_front_url, aadhar_back_url, 
              pan_card_url, bank_statement_url, salary_slip_url, profile_photo_url,
+             bank_name, account_holder_name, account_number, ifsc_code, account_type, branch_name, upi_id,
              created_at, updated_at
       FROM users
       WHERE id = $1
@@ -72,7 +73,8 @@ class User {
       'pan_number', 'aadhar_number',
       'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relation',
       'aadhar_front_url', 'aadhar_back_url', 'pan_card_url', 
-      'bank_statement_url', 'salary_slip_url', 'profile_photo_url'
+      'bank_statement_url', 'salary_slip_url', 'profile_photo_url',
+      'bank_name', 'account_holder_name', 'account_number', 'ifsc_code', 'account_type', 'branch_name', 'upi_id'
     ];
     const updateFields = [];
     const values = [];
@@ -99,7 +101,8 @@ class User {
                 date_of_birth, gender, occupation, company_name, annual_income,
                 pan_number, aadhar_number, emergency_contact_name, emergency_contact_phone,
                 emergency_contact_relation, aadhar_front_url, aadhar_back_url, 
-                pan_card_url, bank_statement_url, salary_slip_url, profile_photo_url, updated_at
+                pan_card_url, bank_statement_url, salary_slip_url, profile_photo_url,
+                bank_name, account_holder_name, account_number, ifsc_code, account_type, branch_name, upi_id, updated_at
     `;
 
     const result = await query(sql, values);

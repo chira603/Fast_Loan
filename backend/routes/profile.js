@@ -40,7 +40,14 @@ router.put('/', protect, asyncHandler(async (req, res) => {
     'aadhar_number',
     'emergency_contact_name',
     'emergency_contact_phone',
-    'emergency_contact_relation'
+    'emergency_contact_relation',
+    'bank_name',
+    'account_holder_name',
+    'account_number',
+    'ifsc_code',
+    'account_type',
+    'branch_name',
+    'upi_id'
   ];
 
   const updates = {};
