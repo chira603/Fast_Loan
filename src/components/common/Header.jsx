@@ -43,12 +43,6 @@ const Header = () => {
                 <Link to="/loan/apply" className="text-neutral-700 hover:text-primary-500 transition-colors">
                   Apply Loan
                 </Link>
-                <Link to="/recharge" className="text-neutral-700 hover:text-primary-500 transition-colors">
-                  Recharge
-                </Link>
-                <Link to="/bills" className="text-neutral-700 hover:text-primary-500 transition-colors">
-                  Pay Bills
-                </Link>
                 {user?.role === 'admin' && (
                   <Link to="/admin" className="text-neutral-700 hover:text-primary-500 transition-colors">
                     Admin
@@ -104,12 +98,6 @@ const Header = () => {
                   </Link>
                   <Link to="/loan/apply" onClick={toggleMenu} className="text-neutral-700 hover:text-primary-500">
                     Apply Loan
-                  </Link>
-                  <Link to="/recharge" onClick={toggleMenu} className="text-neutral-700 hover:text-primary-500">
-                    Recharge
-                  </Link>
-                  <Link to="/bills" onClick={toggleMenu} className="text-neutral-700 hover:text-primary-500">
-                    Pay Bills
                   </Link>
                   {user?.role === 'admin' && (
                     <Link to="/admin" onClick={toggleMenu} className="text-neutral-700 hover:text-primary-500">
