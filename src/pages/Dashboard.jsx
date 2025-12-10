@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { FaPlus, FaChartLine, FaFileInvoiceDollar } from 'react-icons/fa';
+import { FaPlus, FaChartLine, FaFileInvoiceDollar, FaMobileAlt, FaBolt } from 'react-icons/fa';
+import { SiPhonepe, SiGooglepay, SiPaytm } from 'react-icons/si';
+import { toast } from 'react-toastify';
 import { getLoanStatistics, getLoans } from '../services/loanService';
 import { getPaymentsByUser } from '../services/paymentService';
 import { formatCurrency } from '../utils/emiCalculator';
@@ -11,6 +13,8 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [recentLoans, setRecentLoans] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedService, setSelectedService] = useState(null);
 
   useEffect(() => {
     const load = async () => {
@@ -29,6 +33,39 @@ const Dashboard = () => {
     };
     load();
   }, []);
+
+  const openPaymentModal = (service) => {
+    setSelectedService(service);
+    setShowPaymentModal(true);
+  };
+
+  const redirectToPaymentApp = (app) => {
+    // UPI IDs for your business
+    const upiIds = {
+      phonepe: 'fastloan@ybl',
+      googlepay: 'fastloan@okaxis',
+      paytm: 'fastloan@paytm',
+    };
+
+    const serviceName = selectedService === 'recharge' ? 'Mobile Recharge' : 'Bill Payment';
+    const amount = 100; // Default amount, can be customized
+    
+    const params = new URLSearchParams({
+      pa: upiIds[app],
+      pn: 'Fast Loan',
+      am: amount.toString(),
+      cu: 'INR',
+      tn: serviceName,
+    });
+
+    const upiLink = `upi://pay?${params.toString()}`;
+    
+    // Redirect to UPI app
+    window.location.href = upiLink;
+    
+    toast.info(`Redirecting to ${app.toUpperCase()}...`);
+    setShowPaymentModal(false);
+  };
 
   return (
     <div className="container-custom py-8">
@@ -65,7 +102,7 @@ const Dashboard = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid md:grid-cols-1 gap-6 mb-8">
+      <div className="grid md:grid-cols-3 gap-6 mb-8">
         <Link to="/loan/apply" className="card hover:shadow-xl transition-shadow">
           <div className="flex items-center space-x-4">
             <div className="bg-primary-500 text-white p-4 rounded-lg">
@@ -77,6 +114,36 @@ const Dashboard = () => {
             </div>
           </div>
         </Link>
+
+        <button 
+          onClick={() => openPaymentModal('recharge')}
+          className="card hover:shadow-xl transition-shadow text-left"
+        >
+          <div className="flex items-center space-x-4">
+            <div className="bg-green-500 text-white p-4 rounded-lg">
+              <FaMobileAlt className="text-2xl" />
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-neutral-800">Mobile Recharge</h3>
+              <p className="text-neutral-600">Recharge mobile & DTH instantly</p>
+            </div>
+          </div>
+        </button>
+
+        <button 
+          onClick={() => openPaymentModal('bills')}
+          className="card hover:shadow-xl transition-shadow text-left"
+        >
+          <div className="flex items-center space-x-4">
+            <div className="bg-orange-500 text-white p-4 rounded-lg">
+              <FaBolt className="text-2xl" />
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-neutral-800">Pay Bills</h3>
+              <p className="text-neutral-600">Electricity, Water, Gas bills</p>
+            </div>
+          </div>
+        </button>
       </div>
 
       {/* Recent Loans */}
@@ -131,6 +198,71 @@ const Dashboard = () => {
           </ul>
         )}
       </div>
+
+      {/* Payment Method Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-neutral-800 mb-2">
+                {selectedService === 'recharge' ? 'Mobile Recharge' : 'Pay Bills'}
+              </h2>
+              <p className="text-neutral-600">Select your payment app</p>
+            </div>
+
+            <div className="space-y-4">
+              <button
+                onClick={() => redirectToPaymentApp('phonepe')}
+                className="w-full flex items-center justify-between p-4 border-2 border-purple-500 rounded-xl hover:bg-purple-50 transition-all group"
+              >
+                <div className="flex items-center space-x-4">
+                  <SiPhonepe className="text-4xl text-purple-600 group-hover:scale-110 transition-transform" />
+                  <div className="text-left">
+                    <p className="font-bold text-lg text-purple-700">PhonePe</p>
+                    <p className="text-xs text-neutral-500">Pay with PhonePe</p>
+                  </div>
+                </div>
+                <span className="text-purple-600 text-2xl">→</span>
+              </button>
+
+              <button
+                onClick={() => redirectToPaymentApp('googlepay')}
+                className="w-full flex items-center justify-between p-4 border-2 border-blue-500 rounded-xl hover:bg-blue-50 transition-all group"
+              >
+                <div className="flex items-center space-x-4">
+                  <SiGooglepay className="text-4xl text-blue-600 group-hover:scale-110 transition-transform" />
+                  <div className="text-left">
+                    <p className="font-bold text-lg text-blue-700">Google Pay</p>
+                    <p className="text-xs text-neutral-500">Pay with Google Pay</p>
+                  </div>
+                </div>
+                <span className="text-blue-600 text-2xl">→</span>
+              </button>
+
+              <button
+                onClick={() => redirectToPaymentApp('paytm')}
+                className="w-full flex items-center justify-between p-4 border-2 border-cyan-500 rounded-xl hover:bg-cyan-50 transition-all group"
+              >
+                <div className="flex items-center space-x-4">
+                  <SiPaytm className="text-4xl text-cyan-600 group-hover:scale-110 transition-transform" />
+                  <div className="text-left">
+                    <p className="font-bold text-lg text-cyan-700">Paytm</p>
+                    <p className="text-xs text-neutral-500">Pay with Paytm</p>
+                  </div>
+                </div>
+                <span className="text-cyan-600 text-2xl">→</span>
+              </button>
+            </div>
+
+            <button
+              onClick={() => setShowPaymentModal(false)}
+              className="w-full mt-6 py-3 bg-neutral-100 text-neutral-700 rounded-xl font-semibold hover:bg-neutral-200 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

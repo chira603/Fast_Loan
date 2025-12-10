@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import { FaBolt, FaTint, FaFire } from 'react-icons/fa';
+import { SiPhonepe, SiGooglepay, SiPaytm } from 'react-icons/si';
 import { formatCurrency } from '../utils/emiCalculator';
-import { createRazorpayOrder, openRazorpayCheckout, verifyRazorpayPayment } from '../services/razorpay';
 
 const BillPayment = () => {
   const [category, setCategory] = useState('ELECTRICITY');
@@ -69,47 +69,47 @@ const BillPayment = () => {
     }, 1500);
   };
 
-  const payBillWithRazorpay = async () => {
+  // UPI Payment Handlers
+  const generateUPILink = (upiId, amount, name, note) => {
+    const params = new URLSearchParams({
+      pa: upiId, // UPI ID/VPA
+      pn: name, // Payee name
+      am: amount.toString(), // Amount
+      cu: 'INR', // Currency
+      tn: note, // Transaction note
+    });
+    return `upi://pay?${params.toString()}`;
+  };
+
+  const payBillWithUPI = (provider) => {
     if (!billDetails) {
       toast.warn('Please fetch bill details first');
       return;
     }
-    setProcessing(true);
-    try {
-      const purpose = `${category} Bill Payment`;
-      const orderRes = await createRazorpayOrder(billDetails.billAmount, purpose, {
-        billNumber: billDetails.billNumber,
-        accountNumber: billDetails.accountNumber,
-        operator: billDetails.operatorName,
-      });
-      const { keyId, orderId, amount: amountInPaise } = orderRes;
 
-      const checkoutRes = await openRazorpayCheckout({
-        keyId,
-        orderId,
-        amount: amountInPaise,
-        currency: 'INR',
-        name: 'FAST LOAN',
-        description: `${purpose} - ${billDetails.operatorName}`,
-        notes: {
-          accountNumber: billDetails.accountNumber,
-          billNumber: billDetails.billNumber,
-        },
-      });
+    const amount = billDetails.billAmount;
+    
+    // Replace with your actual UPI IDs
+    const upiIds = {
+      phonepe: 'fastloan@ybl', // Your PhonePe UPI ID
+      googlepay: 'fastloan@okaxis', // Your Google Pay UPI ID
+      paytm: 'fastloan@paytm', // Your Paytm UPI ID
+    };
 
-      await verifyRazorpayPayment({
-        razorpay_order_id: checkoutRes.razorpay_order_id,
-        razorpay_payment_id: checkoutRes.razorpay_payment_id,
-        razorpay_signature: checkoutRes.razorpay_signature,
-        amount: billDetails.billAmount,
-      });
+    const upiId = upiIds[provider];
+    const transactionNote = `${category} Bill - ${billDetails.billNumber}`;
+    const upiLink = generateUPILink(upiId, amount, 'Fast Loan', transactionNote);
 
-      toast.success('Payment successful! Processing bill payment...');
-      await handlePayBill();
-    } catch (err) {
-      toast.error(err.message || 'Payment failed');
-      setProcessing(false);
-    }
+    // Open UPI app
+    window.location.href = upiLink;
+
+    // Show confirmation toast
+    toast.info(`Redirecting to ${provider.toUpperCase()}... Please complete the payment`);
+    
+    // After redirect, user will return - show success message
+    setTimeout(() => {
+      toast.success('Payment initiated! Check your UPI app to complete.');
+    }, 1000);
   };
 
   return (
@@ -208,21 +208,36 @@ const BillPayment = () => {
                 </div>
               </div>
 
-              <div className="flex gap-3">
-                <button
-                  onClick={handlePayBill}
-                  disabled={processing}
-                  className="btn-outline w-full text-lg py-3"
-                >
-                  {processing ? 'Processing...' : 'Pay via Balance'}
-                </button>
-                <button
-                  onClick={payBillWithRazorpay}
-                  disabled={processing}
-                  className="btn-primary w-full text-lg py-3"
-                >
-                  {processing ? 'Processing...' : 'Pay with Razorpay'}
-                </button>
+              <div className="mt-6">
+                <p className="text-sm font-semibold text-neutral-700 mb-3 text-center">Select Payment Method</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <button
+                    onClick={() => payBillWithUPI('phonepe')}
+                    className="flex flex-col items-center justify-center p-4 border-2 border-purple-500 rounded-lg hover:bg-purple-50 transition-all hover:shadow-md group"
+                  >
+                    <SiPhonepe className="text-4xl text-purple-600 mb-2 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-semibold text-purple-700">PhonePe</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => payBillWithUPI('googlepay')}
+                    className="flex flex-col items-center justify-center p-4 border-2 border-blue-500 rounded-lg hover:bg-blue-50 transition-all hover:shadow-md group"
+                  >
+                    <SiGooglepay className="text-4xl text-blue-600 mb-2 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-semibold text-blue-700">Google Pay</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => payBillWithUPI('paytm')}
+                    className="flex flex-col items-center justify-center p-4 border-2 border-cyan-500 rounded-lg hover:bg-cyan-50 transition-all hover:shadow-md group"
+                  >
+                    <SiPaytm className="text-4xl text-cyan-600 mb-2 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-semibold text-cyan-700">Paytm</span>
+                  </button>
+                </div>
+                <p className="text-xs text-neutral-500 text-center mt-3">
+                  💡 Click to open UPI app and complete payment
+                </p>
               </div>
             </div>
           )}

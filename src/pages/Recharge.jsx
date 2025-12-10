@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { FaMobileAlt, FaSatelliteDish, FaHistory } from 'react-icons/fa';
+import { SiPhonepe, SiGooglepay, SiPaytm } from 'react-icons/si';
 import { 
   detectOperator, 
   getRechargePlans, 
@@ -10,7 +11,6 @@ import {
   processDTHRecharge,
   getRechargeHistory 
 } from '../services/rechargeService';
-import { createRazorpayOrder, openRazorpayCheckout, verifyRazorpayPayment } from '../services/razorpay';
 import { formatCurrency } from '../utils/emiCalculator';
 
 const Recharge = () => {
@@ -203,76 +203,71 @@ const Recharge = () => {
 
   const filteredPlans = plans.filter(p => p.category === selectedCategory);
   
-  const payWithRazorpayMobile = async () => {
+  // UPI Payment Handlers
+  const generateUPILink = (upiId, amount, name, note) => {
+    const params = new URLSearchParams({
+      pa: upiId, // UPI ID/VPA
+      pn: name, // Payee name
+      am: amount.toString(), // Amount
+      cu: 'INR', // Currency
+      tn: note, // Transaction note
+    });
+    return `upi://pay?${params.toString()}`;
+  };
+
+  const payWithUPI = (provider, amount, purpose, details = {}) => {
+    if (!amount || amount <= 0) {
+      toast.warn('Invalid amount');
+      return;
+    }
+
+    // Replace with your actual UPI IDs
+    const upiIds = {
+      phonepe: 'fastloan@ybl', // Your PhonePe UPI ID
+      googlepay: 'fastloan@okaxis', // Your Google Pay UPI ID
+      paytm: 'fastloan@paytm', // Your Paytm UPI ID
+    };
+
+    const upiId = upiIds[provider];
+    const transactionNote = `${purpose} - ${details.mobile || details.dthNumber || ''}`;
+    const upiLink = generateUPILink(upiId, amount, 'Fast Loan', transactionNote);
+
+    // Open UPI app
+    window.location.href = upiLink;
+
+    // Show confirmation toast
+    toast.info(`Redirecting to ${provider.toUpperCase()}... Please complete the payment`);
+    
+    // After redirect, user will return - show success message
+    setTimeout(() => {
+      toast.success('Payment initiated! Check your UPI app to complete.');
+    }, 1000);
+  };
+
+  const payMobileRechargeUPI = (provider) => {
     if (!selectedPlan || !manualOperator || mobile.length !== 10) {
       toast.warn('Please enter number, select operator and plan');
       return;
     }
-    setProcessing(true);
-    try {
-      const purpose = 'Mobile Recharge';
-      const orderRes = await createRazorpayOrder(selectedPlan.amount, purpose, { operator: manualOperator, mobile });
-      const { keyId, orderId, amount: amountInPaise } = orderRes;
-
-      const checkoutRes = await openRazorpayCheckout({
-        keyId,
-        orderId,
-        amount: amountInPaise,
-        currency: 'INR',
-        name: 'FAST LOAN',
-        description: `${purpose} - ${manualOperator}`,
-        notes: { mobile, operator: manualOperator },
-      });
-
-      await verifyRazorpayPayment({
-        razorpay_order_id: checkoutRes.razorpay_order_id,
-        razorpay_payment_id: checkoutRes.razorpay_payment_id,
-        razorpay_signature: checkoutRes.razorpay_signature,
-        amount: parseFloat(selectedPlan.amount),
-      });
-
-      toast.success('Payment successful! Processing recharge...');
-      await handleMobileRecharge();
-    } catch (err) {
-      toast.error(err.message || 'Payment failed');
-      setProcessing(false);
-    }
+    
+    const amount = selectedPlan.amount;
+    const purpose = 'Mobile Recharge';
+    const details = { mobile, operator: manualOperator };
+    
+    payWithUPI(provider, amount, purpose, details);
   };
 
-  const payWithRazorpayDTH = async () => {
+  const payDTHRechargeUPI = (provider) => {
     if (!selectedDthPlan || !dthNumber || !selectedDthOperator) {
       toast.warn('Please fill all fields and select a plan');
       return;
     }
-    setProcessing(true);
-    try {
-      const purpose = 'DTH Recharge';
-      const orderRes = await createRazorpayOrder(selectedDthPlan.amount, purpose, { operator: selectedDthOperator, dthNumber });
-      const { keyId, orderId, amount: amountInPaise } = orderRes;
-
-      const checkoutRes = await openRazorpayCheckout({
-        keyId,
-        orderId,
-        amount: amountInPaise,
-        currency: 'INR',
-        name: 'FAST LOAN',
-        description: `${purpose} - ${selectedDthOperator}`,
-        notes: { dthNumber, operator: selectedDthOperator },
-      });
-
-      await verifyRazorpayPayment({
-        razorpay_order_id: checkoutRes.razorpay_order_id,
-        razorpay_payment_id: checkoutRes.razorpay_payment_id,
-        razorpay_signature: checkoutRes.razorpay_signature,
-        amount: parseFloat(selectedDthPlan.amount),
-      });
-
-      toast.success('Payment successful! Processing recharge...');
-      await handleDTHRecharge();
-    } catch (err) {
-      toast.error(err.message || 'Payment failed');
-      setProcessing(false);
-    }
+    
+    const amount = selectedDthPlan.amount;
+    const purpose = 'DTH Recharge';
+    const details = { dthNumber, operator: selectedDthOperator };
+    
+    payWithUPI(provider, amount, purpose, details);
   };
 
   return (
@@ -385,21 +380,36 @@ const Recharge = () => {
                   {selectedPlan.validity && <p>⏱️ Validity: {selectedPlan.validity}</p>}
                 </div>
                 
-                <div className="flex gap-3 mt-4">
-                  <button
-                    onClick={handleMobileRecharge}
-                    disabled={processing}
-                    className="btn-outline w-full"
-                  >
-                    {processing ? 'Processing...' : 'Recharge via Balance'}
-                  </button>
-                  <button
-                    onClick={payWithRazorpayMobile}
-                    disabled={processing}
-                    className="btn-primary w-full"
-                  >
-                    {processing ? 'Processing...' : 'Pay with Razorpay'}
-                  </button>
+                <div className="mt-6">
+                  <p className="text-sm font-semibold text-neutral-700 mb-3 text-center">Select Payment Method</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <button
+                      onClick={() => payMobileRechargeUPI('phonepe')}
+                      className="flex flex-col items-center justify-center p-4 border-2 border-purple-500 rounded-lg hover:bg-purple-50 transition-all hover:shadow-md group"
+                    >
+                      <SiPhonepe className="text-4xl text-purple-600 mb-2 group-hover:scale-110 transition-transform" />
+                      <span className="text-xs font-semibold text-purple-700">PhonePe</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => payMobileRechargeUPI('googlepay')}
+                      className="flex flex-col items-center justify-center p-4 border-2 border-blue-500 rounded-lg hover:bg-blue-50 transition-all hover:shadow-md group"
+                    >
+                      <SiGooglepay className="text-4xl text-blue-600 mb-2 group-hover:scale-110 transition-transform" />
+                      <span className="text-xs font-semibold text-blue-700">Google Pay</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => payMobileRechargeUPI('paytm')}
+                      className="flex flex-col items-center justify-center p-4 border-2 border-cyan-500 rounded-lg hover:bg-cyan-50 transition-all hover:shadow-md group"
+                    >
+                      <SiPaytm className="text-4xl text-cyan-600 mb-2 group-hover:scale-110 transition-transform" />
+                      <span className="text-xs font-semibold text-cyan-700">Paytm</span>
+                    </button>
+                  </div>
+                  <p className="text-xs text-neutral-500 text-center mt-3">
+                    💡 Click to open UPI app and complete payment
+                  </p>
                 </div>
               </div>
             )}
@@ -509,21 +519,36 @@ const Recharge = () => {
                 <p className="text-xs text-neutral-600 mt-2">{selectedDthPlan.description}</p>
                 <p className="text-xs text-neutral-600 mt-1">Validity: {selectedDthPlan.validity}</p>
                 
-                <div className="flex gap-3 mt-4">
-                  <button
-                    onClick={handleDTHRecharge}
-                    disabled={processing}
-                    className="btn-outline w-full"
-                  >
-                    {processing ? 'Processing...' : 'Recharge via Balance'}
-                  </button>
-                  <button
-                    onClick={payWithRazorpayDTH}
-                    disabled={processing}
-                    className="btn-primary w-full"
-                  >
-                    {processing ? 'Processing...' : 'Pay with Razorpay'}
-                  </button>
+                <div className="mt-6">
+                  <p className="text-sm font-semibold text-neutral-700 mb-3 text-center">Select Payment Method</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <button
+                      onClick={() => payDTHRechargeUPI('phonepe')}
+                      className="flex flex-col items-center justify-center p-4 border-2 border-purple-500 rounded-lg hover:bg-purple-50 transition-all hover:shadow-md group"
+                    >
+                      <SiPhonepe className="text-4xl text-purple-600 mb-2 group-hover:scale-110 transition-transform" />
+                      <span className="text-xs font-semibold text-purple-700">PhonePe</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => payDTHRechargeUPI('googlepay')}
+                      className="flex flex-col items-center justify-center p-4 border-2 border-blue-500 rounded-lg hover:bg-blue-50 transition-all hover:shadow-md group"
+                    >
+                      <SiGooglepay className="text-4xl text-blue-600 mb-2 group-hover:scale-110 transition-transform" />
+                      <span className="text-xs font-semibold text-blue-700">Google Pay</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => payDTHRechargeUPI('paytm')}
+                      className="flex flex-col items-center justify-center p-4 border-2 border-cyan-500 rounded-lg hover:bg-cyan-50 transition-all hover:shadow-md group"
+                    >
+                      <SiPaytm className="text-4xl text-cyan-600 mb-2 group-hover:scale-110 transition-transform" />
+                      <span className="text-xs font-semibold text-cyan-700">Paytm</span>
+                    </button>
+                  </div>
+                  <p className="text-xs text-neutral-500 text-center mt-3">
+                    💡 Click to open UPI app and complete payment
+                  </p>
                 </div>
               </div>
             )}
