@@ -10,18 +10,37 @@ class EmailService {
 
   initializeTransporter() {
     const emailConfig = {
-      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.EMAIL_PORT || '587'),
-      secure: process.env.EMAIL_SECURE === 'true', // true for 465, false for other ports
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false, // Use STARTTLS
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
       },
+      tls: {
+        rejectUnauthorized: false,
+        minVersion: 'TLSv1.2'
+      },
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
+      logger: false, // Disable logging
+      debug: false // Disable debug
     };
 
     // Only create transporter if credentials are provided
     if (emailConfig.auth.user && emailConfig.auth.pass) {
       this.transporter = nodemailer.createTransport(emailConfig);
+      
+      // Verify connection
+      this.transporter.verify((error, success) => {
+        if (error) {
+          console.error('❌ Email transporter verification failed:', error.message);
+          console.warn('⚠️  Email OTP will be logged to console only');
+        } else {
+          console.log('✅ Email service ready to send emails');
+        }
+      });
     } else {
       console.warn('Email service not configured. Please add EMAIL_USER and EMAIL_PASSWORD to .env');
     }
