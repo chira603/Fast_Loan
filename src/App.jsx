@@ -13,6 +13,9 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import LoanApplication from './pages/LoanApplication';
 import LoanDetails from './pages/LoanDetails';
+import LoanHub from './pages/LoanHub';
+import PendingLoans from './pages/PendingLoans';
+import LoanHistory from './pages/LoanHistory';
 import Contact from './pages/Contact';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
@@ -126,6 +129,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <BillPayment />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/loan"
+            element={
+              <ProtectedRoute>
+                <LoanHub />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/loan/pending"
+            element={
+              <ProtectedRoute>
+                <PendingLoans />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/loan/history"
+            element={
+              <ProtectedRoute>
+                <LoanHistory />
               </ProtectedRoute>
             }
           />

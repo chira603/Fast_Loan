@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { FaPlus, FaChartLine, FaFileInvoiceDollar, FaMobileAlt, FaBolt } from 'react-icons/fa';
+import { FaChartLine, FaFileInvoiceDollar, FaMobileAlt, FaBolt } from 'react-icons/fa';
 import { SiPhonepe, SiGooglepay, SiPaytm } from 'react-icons/si';
 import { toast } from 'react-toastify';
 import { getLoanStatistics, getLoans } from '../services/loanService';
@@ -103,14 +103,14 @@ const Dashboard = () => {
 
       {/* Quick Actions */}
       <div className="grid md:grid-cols-3 gap-6 mb-8">
-        <Link to="/loan/apply" className="card hover:shadow-xl transition-shadow">
+        <Link to="/loan" className="card hover:shadow-xl transition-shadow">
           <div className="flex items-center space-x-4">
-            <div className="bg-primary-500 text-white p-4 rounded-lg">
-              <FaPlus className="text-2xl" />
+            <div className="bg-blue-600 text-white p-4 rounded-lg">
+              <FaFileInvoiceDollar className="text-2xl" />
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-neutral-800">Apply for New Loan</h3>
-              <p className="text-neutral-600">Get instant approval up to ₹5,00,000</p>
+              <h3 className="text-xl font-semibold text-neutral-800">Loans</h3>
+              <p className="text-neutral-600">Apply, track pending, view history</p>
             </div>
           </div>
         </Link>
@@ -151,8 +151,8 @@ const Dashboard = () => {
         <h2 className="text-2xl font-bold mb-6">Recent Loans</h2>
         {recentLoans.length === 0 ? (
           <div className="text-center py-8 text-neutral-500">
-            <p>No loans found. Apply for your first loan today!</p>
-            <Link to="/loan/apply" className="btn-primary mt-4 inline-block">Apply Now</Link>
+            <p>No loans found yet.</p>
+            <Link to="/loan" className="btn-primary mt-4 inline-block">Open Loan Hub</Link>
           </div>
         ) : (
           <div className="overflow-x-auto">
