@@ -35,7 +35,7 @@ export const registerSchema = Yup.object({
 // Loan application validation schema
 export const loanApplicationSchema = Yup.object({
   amount: Yup.number()
-    .min(10000, 'Minimum loan amount is ₹10,000')
+    .min(1, 'Minimum loan amount is ₹1')
     .max(500000, 'Maximum loan amount is ₹5,00,000')
     .required('Loan amount is required'),
   tenure_months: Yup.number()

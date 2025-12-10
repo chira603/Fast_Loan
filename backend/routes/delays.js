@@ -15,7 +15,19 @@ router.post('/', protect, async (req, res) => {
 
     // Validate input
     if (!loan_id || !emi_month || !delay_days) {
-      return res.status(400).json({ message: 'Missing required fields' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Missing required fields' 
+      });
+    }
+
+    // Enforce 1-2 days limit
+    const delayDaysInt = parseInt(delay_days);
+    if (delayDaysInt < 1 || delayDaysInt > 2) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Delay days must be 1 or 2 days only' 
+      });
     }
 
     // Get loan details
@@ -48,15 +60,28 @@ router.post('/', protect, async (req, res) => {
     }
 
     // Check if user has Flex+ subscription
-    const hasFlexSubscription = loan.flex_subscription_expiry && 
-                                 new Date(loan.flex_subscription_expiry) > new Date();
+    const FlexSubscription = require('../models/FlexSubscription');
+    const hasFlexSubscription = await FlexSubscription.hasActiveSubscription(req.user.id);
 
-    // Calculate delay charges
-    const charges = DelayRequest.calculateCharges(
-      parseFloat(emi.amount),
-      parseInt(delay_days),
-      hasFlexSubscription
-    );
+    // Calculate delay charges (FREE for Flex+ members)
+    let charges;
+    try {
+      charges = DelayRequest.calculateCharges(
+        parseFloat(emi.amount),
+        delayDaysInt,
+        hasFlexSubscription
+      );
+    } catch (error) {
+      return res.status(400).json({ 
+        success: false,
+        message: error.message 
+      });
+    }
+
+    // Track Flex+ usage if applicable
+    if (hasFlexSubscription) {
+      await FlexSubscription.trackDelayUsage(req.user.id);
+    }
 
     // Calculate new due date (28-day cycle + delay days)
     const originalDueDate = new Date(emi.due_date);
@@ -95,9 +120,13 @@ router.post('/', protect, async (req, res) => {
     await Loan.updateRepaymentSchedule(loan_id, updatedSchedule);
 
     res.status(201).json({
-      message: 'Delay request approved',
+      success: true,
+      message: hasFlexSubscription 
+        ? '🎉 EMI delayed for FREE with Flex+ Membership!' 
+        : 'EMI delay request approved',
       delay: approved,
-      charges
+      charges,
+      flex_plus_member: hasFlexSubscription
     });
   } catch (error) {
     console.error('Error creating delay request:', error);

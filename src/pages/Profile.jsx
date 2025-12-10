@@ -64,7 +64,7 @@ const Profile = () => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/v1/profile');
+      const response = await api.get('/profile');
       // API interceptor already returns response.data, so we access .data directly
       const userData = response.data || response;
       
@@ -119,7 +119,22 @@ const Profile = () => {
       const updateData = { ...formData };
       delete updateData.email; // Email cannot be updated via this endpoint
       
-      const response = await api.put('/api/v1/profile', updateData);
+      // Clean up numeric fields - convert empty strings to null
+      const numericFields = ['annual_income'];
+      numericFields.forEach(field => {
+        if (updateData[field] === '' || updateData[field] === null) {
+          updateData[field] = null;
+        }
+      });
+      
+      // Remove empty string fields to avoid database errors
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === '') {
+          updateData[key] = null;
+        }
+      });
+      
+      const response = await api.put('/profile', updateData);
       
       // API interceptor already returns response.data, so we access .data directly
       const updatedUserData = response.data || response;

@@ -1,14 +1,14 @@
 -- FAST LOAN Application - Sample Data
 -- Seeds for testing and development
--- Note: Passwords are hashed using bcrypt (example hash for 'password123')
+-- Note: All passwords are 'password123' hashed using bcrypt
 
 -- Insert Sample Users
 INSERT INTO users (username, email, password_hash, role, full_name, phone, address, kyc_verified) VALUES
-('admin', 'admin@fastloan.com', '$2b$10$rKzVQ5xP6Y3X8FmYvZ2N3eLnKGKGv.mGxEg5dkKPY3X8FmYvZ2N3e', 'admin', 'Admin User', '+1-555-0100', '123 Admin St, City, State', true),
-('johndoe', 'john.doe@email.com', '$2b$10$rKzVQ5xP6Y3X8FmYvZ2N3eLnKGKGv.mGxEg5dkKPY3X8FmYvZ2N3e', 'client', 'John Doe', '+1-555-0101', '456 Main St, City, State', true),
-('janedoe', 'jane.doe@email.com', '$2b$10$rKzVQ5xP6Y3X8FmYvZ2N3eLnKGKGv.mGxEg5dkKPY3X8FmYvZ2N3e', 'client', 'Jane Doe', '+1-555-0102', '789 Elm St, City, State', true),
-('bobsmith', 'bob.smith@email.com', '$2b$10$rKzVQ5xP6Y3X8FmYvZ2N3eLnKGKGv.mGxEg5dkKPY3X8FmYvZ2N3e', 'client', 'Bob Smith', '+1-555-0103', '321 Oak Ave, City, State', false),
-('alicejohnson', 'alice.j@email.com', '$2b$10$rKzVQ5xP6Y3X8FmYvZ2N3eLnKGKGv.mGxEg5dkKPY3X8FmYvZ2N3e', 'client', 'Alice Johnson', '+1-555-0104', '654 Pine Rd, City, State', true);
+('admin', 'admin@fastloan.com', '$2b$10$QEXbdkEXL8VlZ.5Z7HU32.nwf.imYoasfFXA8EPQOsDbIGjfb1IOa', 'admin', 'Admin User', '+1-555-0100', '123 Admin St, City, State', true),
+('johndoe', 'john.doe@email.com', '$2b$10$QEXbdkEXL8VlZ.5Z7HU32.nwf.imYoasfFXA8EPQOsDbIGjfb1IOa', 'client', 'John Doe', '+1-555-0101', '456 Main St, City, State', true),
+('janedoe', 'jane.doe@email.com', '$2b$10$QEXbdkEXL8VlZ.5Z7HU32.nwf.imYoasfFXA8EPQOsDbIGjfb1IOa', 'client', 'Jane Doe', '+1-555-0102', '789 Elm St, City, State', true),
+('bobsmith', 'bob.smith@email.com', '$2b$10$QEXbdkEXL8VlZ.5Z7HU32.nwf.imYoasfFXA8EPQOsDbIGjfb1IOa', 'client', 'Bob Smith', '+1-555-0103', '321 Oak Ave, City, State', false),
+('alicejohnson', 'alice.j@email.com', '$2b$10$QEXbdkEXL8VlZ.5Z7HU32.nwf.imYoasfFXA8EPQOsDbIGjfb1IOa', 'client', 'Alice Johnson', '+1-555-0104', '654 Pine Rd, City, State', true);
 
 -- Insert Sample Loans
 INSERT INTO loans (user_id, amount, tenure_months, interest_rate, emi, status, application_date, approval_date, purpose, employment_status, monthly_income, repayment_schedule) VALUES

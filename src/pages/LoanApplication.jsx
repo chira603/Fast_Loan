@@ -7,7 +7,7 @@ import { calculateEMI, generateRepaymentSchedule, checkAffordability, formatCurr
 const LoanApplication = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
-    amount: 100000,
+    amount: 50000,
     tenure_months: 12,
     interest_rate: 12.0,
     purpose: '',
@@ -52,7 +52,7 @@ const LoanApplication = () => {
         <div className="grid md:grid-cols-3 gap-6">
           <div>
             <label className="label">Amount (₹)</label>
-            <input name="amount" type="number" min="10000" max="500000" step="1000" className="input-field" value={form.amount} onChange={handleChange} />
+            <input name="amount" type="number" min="1" max="500000" step="1" className="input-field" value={form.amount} onChange={handleChange} />
           </div>
           <div>
             <label className="label">Tenure (months)</label>

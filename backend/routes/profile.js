@@ -53,7 +53,12 @@ router.put('/', protect, asyncHandler(async (req, res) => {
   const updates = {};
   Object.keys(req.body).forEach(key => {
     if (allowedUpdates.includes(key) && req.body[key] !== undefined) {
-      updates[key] = req.body[key];
+      // Convert empty strings to null for database compatibility
+      if (req.body[key] === '') {
+        updates[key] = null;
+      } else {
+        updates[key] = req.body[key];
+      }
     }
   });
 

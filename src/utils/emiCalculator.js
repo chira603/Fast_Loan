@@ -78,7 +78,7 @@ export const calculateLoanCost = (principal, annualRate, tenureMonths) => {
  * Validate loan amount
  */
 export const validateLoanAmount = (amount) => {
-  const min = parseFloat(import.meta.env.VITE_MIN_LOAN_AMOUNT) || 10000;
+  const min = parseFloat(import.meta.env.VITE_MIN_LOAN_AMOUNT) || 1;
   const max = parseFloat(import.meta.env.VITE_MAX_LOAN_AMOUNT) || 500000;
   
   if (isNaN(amount) || amount < min || amount > max) {

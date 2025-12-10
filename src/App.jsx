@@ -23,6 +23,7 @@ import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
 import Recharge from './pages/Recharge';
 import BillPayment from './pages/BillPayment';
+import FlexPlus from './pages/FlexPlus';
 import NotFound from './pages/NotFound';
 
 // Protected Route Component
@@ -171,6 +172,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <LoanApplication />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/flex-plus"
+            element={
+              <ProtectedRoute>
+                <FlexPlus />
               </ProtectedRoute>
             }
           />

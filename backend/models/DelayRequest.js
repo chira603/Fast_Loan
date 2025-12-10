@@ -126,8 +126,16 @@ class DelayRequest {
 
   /**
    * Calculate delay charges
+   * Delay Days: Maximum 1-2 days only
+   * Delay Fee: ₹10-30 based on EMI amount
+   * Extra Interest: 0.1-0.2% per day
    */
   static calculateCharges(emiAmount, delayDays, hasFlexSubscription) {
+    // Enforce 1-2 days limit
+    if (delayDays < 1 || delayDays > 2) {
+      throw new Error('Delay days must be between 1-2 days only');
+    }
+
     // Delay fee: ₹10-30 based on EMI amount
     let delayFee = 10;
     if (emiAmount > 10000) delayFee = 30;
@@ -137,15 +145,70 @@ class DelayRequest {
     const dailyInterestRate = hasFlexSubscription ? 0.001 : 0.002; // 0.1% vs 0.2%
     const extraInterest = emiAmount * dailyInterestRate * delayDays;
 
-    // Flex+ subscribers get 50% discount on delay fee
+    // Flex+ subscribers get FREE delays (no charges)
     if (hasFlexSubscription) {
-      delayFee = delayFee / 2;
+      return {
+        delay_fee: 0,
+        extra_interest: 0,
+        total_charge: 0,
+        is_flex_plus: true,
+        message: 'Free delay with Flex+ Membership'
+      };
     }
 
     return {
       delay_fee: Math.round(delayFee * 100) / 100,
       extra_interest: Math.round(extraInterest * 100) / 100,
-      total_charge: Math.round((delayFee + extraInterest) * 100) / 100
+      total_charge: Math.round((delayFee + extraInterest) * 100) / 100,
+      is_flex_plus: false
+    };
+  }
+
+  /**
+   * Check if user can request delay
+   */
+  static async canRequestDelay(userId, loanId, emiMonth) {
+    // Check total delays for this EMI
+    const emiDelaysQuery = `
+      SELECT COUNT(*) as delay_count
+      FROM delay_requests
+      WHERE loan_id = $1 AND emi_month = $2 AND status = 'approved'
+    `;
+    const emiResult = await pool.query(emiDelaysQuery, [loanId, emiMonth]);
+    
+    if (parseInt(emiResult.rows[0].delay_count) >= 3) {
+      return {
+        can_delay: false,
+        reason: 'Maximum 3 delays reached for this EMI'
+      };
+    }
+
+    // Check 28-day EMI cycle
+    const loanQuery = `
+      SELECT next_emi_date, last_emi_date, status
+      FROM loans
+      WHERE id = $1 AND user_id = $2
+    `;
+    const loanResult = await pool.query(loanQuery, [loanId, userId]);
+    
+    if (!loanResult.rows.length) {
+      return {
+        can_delay: false,
+        reason: 'Loan not found'
+      };
+    }
+
+    const loan = loanResult.rows[0];
+    if (loan.status !== 'disbursed') {
+      return {
+        can_delay: false,
+        reason: 'Loan must be in disbursed status'
+      };
+    }
+
+    return {
+      can_delay: true,
+      loan: loan
     };
   }
 }

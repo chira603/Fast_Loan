@@ -10,7 +10,7 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 const Home = () => {
   const { isAuthenticated } = useSelector((state) => state.auth);
-  const [amount, setAmount] = useState(100000);
+  const [amount, setAmount] = useState(50000);
   const [tenure, setTenure] = useState(12);
   const [interestRate] = useState(parseFloat(import.meta.env.VITE_DEFAULT_INTEREST_RATE) || 12);
 
@@ -105,15 +105,15 @@ const Home = () => {
                 </label>
                 <input
                   type="range"
-                  min="10000"
+                  min="1"
                   max="500000"
-                  step="5000"
+                  step="1000"
                   value={amount}
                   onChange={(e) => setAmount(parseFloat(e.target.value))}
                   className="w-full"
                 />
                 <div className="flex justify-between text-sm text-neutral-500 mt-1">
-                  <span>₹10,000</span>
+                  <span>₹1</span>
                   <span>₹5,00,000</span>
                 </div>
               </div>
