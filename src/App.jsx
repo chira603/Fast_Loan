@@ -16,6 +16,8 @@ import LoanDetails from './pages/LoanDetails';
 import LoanHub from './pages/LoanHub';
 import PendingLoans from './pages/PendingLoans';
 import LoanHistory from './pages/LoanHistory';
+import LoanPayment from './pages/LoanPayment';
+import PayEMI from './pages/PayEMI';
 import Contact from './pages/Contact';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
@@ -157,6 +159,14 @@ function App() {
             }
           />
           <Route
+            path="/loan/pay-emi"
+            element={
+              <ProtectedRoute>
+                <PayEMI />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/loan/apply"
             element={
               <ProtectedRoute>
@@ -169,6 +179,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <LoanDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/loan/:loanId/pay"
+            element={
+              <ProtectedRoute>
+                <LoanPayment />
               </ProtectedRoute>
             }
           />

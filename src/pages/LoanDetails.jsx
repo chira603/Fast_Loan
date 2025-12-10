@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
+import { FaRupeeSign } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { getLoanById } from '../services/loanService';
 import { getPaymentsByLoan, makePayment } from '../services/paymentService';
@@ -243,8 +244,31 @@ const LoanDetails = () => {
 
       {/* Payment Section - only show for approved/disbursed loans */}
       {(loan.status === 'approved' || loan.status === 'disbursed') && remainingBalance > 0 && (
+        <div className="card mt-6 border-2 border-primary-200 bg-primary-50">
+          <h3 className="font-bold text-lg mb-4 text-primary-900">💳 Make Payment via UPI</h3>
+          <p className="text-neutral-700 mb-4">
+            Choose your payment type and complete the payment securely through UPI.
+          </p>
+          <div className="flex gap-4">
+            <Link 
+              to={`/loan/${id}/pay`}
+              className="btn-primary inline-flex items-center"
+            >
+              <FaRupeeSign className="mr-2" />
+              Pay Now
+            </Link>
+            <div className="text-sm text-neutral-600 self-center">
+              <p><strong>EMI Amount:</strong> {formatCurrency(loan.emi)}</p>
+              <p><strong>Remaining:</strong> {formatCurrency(remainingBalance)}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Legacy Payment Section (backup) */}
+      {false && (loan.status === 'approved' || loan.status === 'disbursed') && remainingBalance > 0 && (
         <div className="card mt-6 border-2 border-blue-200 bg-blue-50">
-          <h3 className="font-bold text-lg mb-4 text-blue-900">💳 Make EMI Payment</h3>
+          <h3 className="font-bold text-lg mb-4 text-blue-900">💳 Make EMI Payment (Wallet)</h3>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <div className="mb-4">

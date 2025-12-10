@@ -22,6 +22,7 @@ const budgetRoutes = require('./routes/budget');
 const creditCardRoutes = require('./routes/creditCard');
 const rechargeRoutes = require('./routes/recharge');
 const otpRoutes = require('./routes/otp');
+const loanPaymentRoutes = require('./routes/loanPayments');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -69,9 +70,7 @@ app.use(`/api/${API_VERSION}/budget`, budgetRoutes);
 app.use(`/api/${API_VERSION}/credit-card`, creditCardRoutes);
 app.use(`/api/${API_VERSION}/recharge`, rechargeRoutes);
 app.use(`/api/${API_VERSION}/otp`, otpRoutes);
-
-const paymentsRoutes = require('./routes/payments');
-app.use(`/api/${API_VERSION}/payments`, paymentsRoutes);
+app.use(`/api/${API_VERSION}/loan-payments`, loanPaymentRoutes);
 
 // 404 handler
 app.use((req, res) => {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHandHoldingUsd, FaClock, FaHistory, FaRupeeSign } from 'react-icons/fa';
+import { FaHandHoldingUsd, FaClock, FaHistory, FaRupeeSign, FaMoneyBillWave } from 'react-icons/fa';
 import { getCreditCard } from '../services/creditService';
 import { getLoanStatistics } from '../services/loanService';
 import { toast } from 'react-toastify';
@@ -99,7 +99,19 @@ const LoanHub = () => {
       </div>
 
       {/* Actions */}
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-4 gap-6">
+        <button onClick={() => navigate('/loan/pay-emi')} className="card hover:shadow-lg transition-shadow text-left">
+          <div className="flex items-center space-x-4">
+            <div className="p-4 bg-purple-100 text-purple-700 rounded-xl">
+              <FaMoneyBillWave className="text-2xl" />
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold">Pay EMI</h3>
+              <p className="text-neutral-600">Make EMI payments instantly</p>
+            </div>
+          </div>
+        </button>
+
         <button onClick={() => navigate('/loan/apply')} className="card hover:shadow-lg transition-shadow text-left">
           <div className="flex items-center space-x-4">
             <div className="p-4 bg-green-100 text-green-700 rounded-xl">
