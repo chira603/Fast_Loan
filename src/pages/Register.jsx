@@ -12,7 +12,7 @@ const Register = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState(1); // 1: Form, 2: OTP Verification, 3: Registration
+  // Inline OTP verification within the form (no separate step)
   const [formData, setFormData] = useState(null);
   const [emailOTP, setEmailOTP] = useState('');
   const [phoneOTP, setPhoneOTP] = useState('');
@@ -36,36 +36,48 @@ const Register = () => {
     }, 1000);
   };
 
-  // Handle form submission (Step 1)
-  const handleFormSubmit = async (values) => {
+  // Trigger send email OTP
+  const handleSendEmailOTP = async (values) => {
+    if (!values?.email) {
+      toast.error('Enter a valid email first');
+      return;
+    }
     setIsLoading(true);
     try {
-      setFormData(values);
-      
-      // Send email OTP
       await sendEmailOTP(values.email, values.full_name);
-      toast.success('OTP sent to your email!');
+      setFormData(values);
+      toast.success('OTP sent to your email! (valid for 1 minute)');
       setOtpSent(prev => ({ ...prev, email: true }));
       startResendTimer('email');
-
-      // Send SMS OTP if phone is provided
-      if (values.phone) {
-        await sendSmsOTP(values.phone);
-        toast.success('OTP sent to your phone!');
-        setOtpSent(prev => ({ ...prev, phone: true }));
-        startResendTimer('phone');
-      }
-
-      setStep(2); // Move to OTP verification
     } catch (error) {
-      toast.error(error.message || 'Failed to send OTP. Please try again.');
+      toast.error(error.message || 'Failed to send email OTP.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Trigger send phone OTP
+  const handleSendPhoneOTP = async (values) => {
+    if (!values?.phone) {
+      toast.error('Enter a valid phone number first');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await sendSmsOTP(values.phone);
+      setFormData(values);
+      toast.success('OTP sent to your phone! (valid for 1 minute)');
+      setOtpSent(prev => ({ ...prev, phone: true }));
+      startResendTimer('phone');
+    } catch (error) {
+      toast.error(error.message || 'Failed to send phone OTP.');
     } finally {
       setIsLoading(false);
     }
   };
 
   // Verify email OTP
-  const handleVerifyEmailOTP = async () => {
+  const handleVerifyEmailOTP = async (values) => {
     if (!emailOTP || emailOTP.length !== 6) {
       toast.error('Please enter a valid 6-digit OTP');
       return;
@@ -73,7 +85,8 @@ const Register = () => {
 
     setIsLoading(true);
     try {
-      await verifyEmailOTP(formData.email, emailOTP);
+      const emailToVerify = values?.email || formData?.email;
+      await verifyEmailOTP(emailToVerify, emailOTP);
       setEmailVerified(true);
       toast.success('Email verified successfully!');
     } catch (error) {
@@ -84,7 +97,7 @@ const Register = () => {
   };
 
   // Verify phone OTP
-  const handleVerifyPhoneOTP = async () => {
+  const handleVerifyPhoneOTP = async (values) => {
     if (!phoneOTP || phoneOTP.length !== 6) {
       toast.error('Please enter a valid 6-digit OTP');
       return;
@@ -92,7 +105,8 @@ const Register = () => {
 
     setIsLoading(true);
     try {
-      await verifySmsOTP(formData.phone, phoneOTP);
+      const phoneToVerify = values?.phone || formData?.phone;
+      await verifySmsOTP(phoneToVerify, phoneOTP);
       setPhoneVerified(true);
       toast.success('Phone verified successfully!');
     } catch (error) {
@@ -103,10 +117,12 @@ const Register = () => {
   };
 
   // Resend email OTP
-  const handleResendEmailOTP = async () => {
+  const handleResendEmailOTP = async (values) => {
     setIsLoading(true);
     try {
-      await resendEmailOTP(formData.email, formData.full_name);
+      const emailToResend = values?.email || formData?.email;
+      const nameToUse = values?.full_name || formData?.full_name;
+      await resendEmailOTP(emailToResend, nameToUse);
       toast.success('New OTP sent to your email!');
       startResendTimer('email');
       setEmailOTP('');
@@ -118,10 +134,11 @@ const Register = () => {
   };
 
   // Resend phone OTP
-  const handleResendPhoneOTP = async () => {
+  const handleResendPhoneOTP = async (values) => {
     setIsLoading(true);
     try {
-      await resendSmsOTP(formData.phone);
+      const phoneToResend = values?.phone || formData?.phone;
+      await resendSmsOTP(phoneToResend);
       toast.success('New OTP sent to your phone!');
       startResendTimer('phone');
       setPhoneOTP('');
@@ -133,24 +150,24 @@ const Register = () => {
   };
 
   // Complete registration
-  const handleCompleteRegistration = async () => {
+  const handleCompleteRegistration = async (values) => {
     if (!emailVerified) {
       toast.error('Please verify your email first');
       return;
     }
 
-    if (formData.phone && !phoneVerified) {
+    if (values?.phone && !phoneVerified) {
       toast.error('Please verify your phone number first');
       return;
     }
 
     setIsLoading(true);
     try {
-      const { confirmPassword, ...userData } = formData;
+      const { confirmPassword, ...userData } = values || formData;
       const response = await register({
         ...userData,
         emailVerified: true,
-        phoneVerified: formData.phone ? true : undefined,
+        phoneVerified: values?.phone ? phoneVerified : undefined,
       });
       
       const user = response.data.user;
@@ -170,308 +187,238 @@ const Register = () => {
     }
   };
 
-  // Render Step 1: Registration Form
-  if (step === 1) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-100 py-12 px-4">
-        <div className="max-w-2xl w-full">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-primary-500 mb-2">Create Account</h1>
-            <p className="text-neutral-600">Join Fast Loan today</p>
-          </div>
-
-          <div className="card">
-            <Formik
-              initialValues={{
-                username: '',
-                email: '',
-                password: '',
-                confirmPassword: '',
-                full_name: '',
-                phone: '',
-                address: '',
-              }}
-              validationSchema={registerSchema}
-              onSubmit={handleFormSubmit}
-            >
-              {({ isValid, dirty }) => (
-                <Form className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="label">
-                        <FaUser className="inline mr-2" />
-                        Username
-                      </label>
-                      <Field
-                        type="text"
-                        name="username"
-                        className="input-field"
-                        placeholder="johndoe"
-                      />
-                      <ErrorMessage name="username" component="div" className="error-message" />
-                    </div>
-
-                    <div>
-                      <label className="label">
-                        <FaUser className="inline mr-2" />
-                        Full Name
-                      </label>
-                      <Field
-                        type="text"
-                        name="full_name"
-                        className="input-field"
-                        placeholder="John Doe"
-                      />
-                      <ErrorMessage name="full_name" component="div" className="error-message" />
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="label">
-                        <FaEnvelope className="inline mr-2" />
-                        Email
-                      </label>
-                      <Field
-                        type="email"
-                        name="email"
-                        className="input-field"
-                        placeholder="john@example.com"
-                      />
-                      <ErrorMessage name="email" component="div" className="error-message" />
-                    </div>
-
-                    <div>
-                      <label className="label">
-                        <FaPhone className="inline mr-2" />
-                        Phone (Optional)
-                      </label>
-                      <Field
-                        type="tel"
-                        name="phone"
-                        className="input-field"
-                        placeholder="+91 98765 43210"
-                      />
-                      <ErrorMessage name="phone" component="div" className="error-message" />
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="label">
-                        <FaLock className="inline mr-2" />
-                        Password
-                      </label>
-                      <Field
-                        type="password"
-                        name="password"
-                        className="input-field"
-                        placeholder="••••••••"
-                      />
-                      <ErrorMessage name="password" component="div" className="error-message" />
-                    </div>
-
-                    <div>
-                      <label className="label">
-                        <FaLock className="inline mr-2" />
-                        Confirm Password
-                      </label>
-                      <Field
-                        type="password"
-                        name="confirmPassword"
-                        className="input-field"
-                        placeholder="••••••••"
-                      />
-                      <ErrorMessage name="confirmPassword" component="div" className="error-message" />
-                    </div>
+  // Render: Single-step registration with inline OTP verification for email and phone
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-neutral-100 py-12 px-4">
+      <div className="max-w-2xl w-full">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-primary-500 mb-2">Create Account</h1>
+          <p className="text-neutral-600">Join Fast Loan today</p>
+        </div>
+        <div className="card">
+          <Formik
+            initialValues={{
+              username: '',
+              email: '',
+              password: '',
+              confirmPassword: '',
+              full_name: '',
+              phone: '',
+              address: '',
+            }}
+            validationSchema={registerSchema}
+            onSubmit={handleCompleteRegistration}
+          >
+            {({ isValid, dirty, values }) => (
+              <Form className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="label">
+                      <FaUser className="inline mr-2" />
+                      Username
+                    </label>
+                    <Field
+                      type="text"
+                      name="username"
+                      className="input-field"
+                      placeholder="johndoe"
+                    />
+                    <ErrorMessage name="username" component="div" className="error-message" />
                   </div>
 
                   <div>
                     <label className="label">
-                      <FaMapMarkerAlt className="inline mr-2" />
-                      Address (Optional)
+                      <FaUser className="inline mr-2" />
+                      Full Name
                     </label>
                     <Field
-                      as="textarea"
-                      name="address"
-                      rows="3"
+                      type="text"
+                      name="full_name"
                       className="input-field"
-                      placeholder="123 Main St, City, State, PIN"
+                      placeholder="John Doe"
                     />
-                    <ErrorMessage name="address" component="div" className="error-message" />
+                    <ErrorMessage name="full_name" component="div" className="error-message" />
                   </div>
-
-                  <button
-                    type="submit"
-                    className="btn-primary w-full"
-                    disabled={!isValid || !dirty || isLoading}
-                  >
-                    {isLoading ? 'Sending OTP...' : 'Continue to Verification'}
-                  </button>
-                </Form>
-              )}
-            </Formik>
-
-            <div className="mt-6 text-center">
-              <p className="text-neutral-600">
-                Already have an account?{' '}
-                <Link to="/login" className="text-primary-500 hover:underline font-medium">
-                  Login here
-                </Link>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Render Step 2: OTP Verification
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-100 py-12 px-4">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary-500 mb-2">Verify Your Details</h1>
-          <p className="text-neutral-600">We've sent OTP codes to verify your information</p>
-        </div>
-
-        <div className="card space-y-6">
-          {/* Email OTP Section */}
-          <div className="p-4 bg-neutral-50 rounded-lg">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-neutral-800">Email Verification</h3>
-              {emailVerified ? (
-                <FaCheckCircle className="text-green-500 text-xl" />
-              ) : (
-                <FaClock className="text-orange-500 text-xl" />
-              )}
-            </div>
-            
-            <p className="text-sm text-neutral-600 mb-3">
-              OTP sent to: <strong>{formData?.email}</strong>
-            </p>
-
-            {!emailVerified && (
-              <>
-                <input
-                  type="text"
-                  value={emailOTP}
-                  onChange={(e) => setEmailOTP(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="Enter 6-digit OTP"
-                  className="input-field mb-3"
-                  maxLength="6"
-                />
-                
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleVerifyEmailOTP}
-                    className="btn-primary flex-1"
-                    disabled={isLoading || emailOTP.length !== 6}
-                  >
-                    {isLoading ? 'Verifying...' : 'Verify Email'}
-                  </button>
-                  
-                  <button
-                    onClick={handleResendEmailOTP}
-                    className="btn-secondary"
-                    disabled={isLoading || resendTimer.email > 0}
-                  >
-                    {resendTimer.email > 0 ? `${resendTimer.email}s` : 'Resend'}
-                  </button>
                 </div>
-              </>
-            )}
 
-            {emailVerified && (
-              <div className="text-green-600 font-medium flex items-center">
-                <FaCheckCircle className="mr-2" />
-                Email verified successfully!
-              </div>
-            )}
-          </div>
-
-          {/* Phone OTP Section (if phone provided) */}
-          {formData?.phone && (
-            <div className="p-4 bg-neutral-50 rounded-lg">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-neutral-800">Phone Verification</h3>
-                {phoneVerified ? (
-                  <FaCheckCircle className="text-green-500 text-xl" />
-                ) : (
-                  <FaClock className="text-orange-500 text-xl" />
-                )}
-              </div>
-              
-              <p className="text-sm text-neutral-600 mb-3">
-                OTP sent to: <strong>{formData?.phone}</strong>
-              </p>
-
-              {!phoneVerified && (
-                <>
-                  <input
-                    type="text"
-                    value={phoneOTP}
-                    onChange={(e) => setPhoneOTP(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    placeholder="Enter 6-digit OTP"
-                    className="input-field mb-3"
-                    maxLength="6"
-                  />
-                  
+                {/* Email Field with OTP - Full Width */}
+                <div>
+                  <label className="label flex items-center justify-between">
+                    <span><FaEnvelope className="inline mr-2" /> Email</span>
+                    {emailVerified && (
+                      <span className="text-green-600 flex items-center text-sm"><FaCheckCircle className="mr-1" /> Verified</span>
+                    )}
+                  </label>
                   <div className="flex gap-2">
+                    <Field
+                      type="email"
+                      name="email"
+                      className="input-field flex-1"
+                      placeholder="john@example.com"
+                    />
                     <button
-                      onClick={handleVerifyPhoneOTP}
-                      className="btn-primary flex-1"
-                      disabled={isLoading || phoneOTP.length !== 6}
+                      type="button"
+                      className="btn-secondary whitespace-nowrap px-4"
+                      disabled={isLoading || resendTimer.email > 0 || !values.email}
+                      onClick={() => handleSendEmailOTP(values)}
                     >
-                      {isLoading ? 'Verifying...' : 'Verify Phone'}
-                    </button>
-                    
-                    <button
-                      onClick={handleResendPhoneOTP}
-                      className="btn-secondary"
-                      disabled={isLoading || resendTimer.phone > 0}
-                    >
-                      {resendTimer.phone > 0 ? `${resendTimer.phone}s` : 'Resend'}
+                      {resendTimer.email > 0 ? `${resendTimer.email}s` : 'Send OTP'}
                     </button>
                   </div>
-                </>
-              )}
+                  <ErrorMessage name="email" component="div" className="error-message" />
 
-              {phoneVerified && (
-                <div className="text-green-600 font-medium flex items-center">
-                  <FaCheckCircle className="mr-2" />
-                  Phone verified successfully!
+                  {/* Email OTP Verification Row */}
+                  {otpSent.email && !emailVerified && (
+                    <div className="mt-3 flex gap-2">
+                      <input
+                        type="text"
+                        value={emailOTP}
+                        onChange={(e) => setEmailOTP(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        placeholder="Enter 6-digit OTP"
+                        className="input-field flex-1"
+                        maxLength="6"
+                      />
+                      <button
+                        type="button"
+                        className="btn-primary whitespace-nowrap px-4"
+                        disabled={isLoading || emailOTP.length !== 6}
+                        onClick={() => handleVerifyEmailOTP(values)}
+                      >
+                        Verify
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-outline whitespace-nowrap px-3"
+                        disabled={isLoading || resendTimer.email > 0}
+                        onClick={() => handleResendEmailOTP(values)}
+                      >
+                        Resend
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          )}
 
-          {/* Complete Registration Button */}
-          <div className="pt-4">
-            <button
-              onClick={handleCompleteRegistration}
-              className="btn-primary w-full"
-              disabled={!emailVerified || (formData?.phone && !phoneVerified) || isLoading}
-            >
-              {isLoading ? 'Completing Registration...' : 'Complete Registration'}
-            </button>
+                {/* Phone Field with OTP */}
+                <div>
+                  <label className="label flex items-center justify-between">
+                    <span><FaPhone className="inline mr-2" /> Phone (Optional)</span>
+                    {phoneVerified && (
+                      <span className="text-green-600 flex items-center text-sm"><FaCheckCircle className="mr-1" /> Verified</span>
+                    )}
+                  </label>
+                  <div className="flex gap-2">
+                    <Field
+                      type="tel"
+                      name="phone"
+                      className="input-field flex-1"
+                      placeholder="+91 98765 43210"
+                    />
+                    <button
+                      type="button"
+                      className="btn-secondary whitespace-nowrap px-4"
+                      disabled={isLoading || !values.phone || resendTimer.phone > 0}
+                      onClick={() => handleSendPhoneOTP(values)}
+                    >
+                      {resendTimer.phone > 0 ? `${resendTimer.phone}s` : 'Send OTP'}
+                    </button>
+                  </div>
+                  <ErrorMessage name="phone" component="div" className="error-message" />
+
+                  {/* Phone OTP Verification Row */}
+                  {otpSent.phone && !phoneVerified && (
+                    <div className="mt-3 flex gap-2">
+                      <input
+                        type="text"
+                        value={phoneOTP}
+                        onChange={(e) => setPhoneOTP(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        placeholder="Enter 6-digit OTP"
+                        className="input-field flex-1"
+                        maxLength="6"
+                      />
+                      <button
+                        type="button"
+                        className="btn-primary whitespace-nowrap px-4"
+                        disabled={isLoading || phoneOTP.length !== 6}
+                        onClick={() => handleVerifyPhoneOTP(values)}
+                      >
+                        Verify
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-outline whitespace-nowrap px-3"
+                        disabled={isLoading || resendTimer.phone > 0}
+                        onClick={() => handleResendPhoneOTP(values)}
+                      >
+                        Resend
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="label">
+                      <FaLock className="inline mr-2" />
+                      Password
+                    </label>
+                    <Field
+                      type="password"
+                      name="password"
+                      className="input-field"
+                      placeholder="••••••••"
+                    />
+                    <ErrorMessage name="password" component="div" className="error-message" />
+                  </div>
+
+                  <div>
+                    <label className="label">
+                      <FaLock className="inline mr-2" />
+                      Confirm Password
+                    </label>
+                    <Field
+                      type="password"
+                      name="confirmPassword"
+                      className="input-field"
+                      placeholder="••••••••"
+                    />
+                    <ErrorMessage name="confirmPassword" component="div" className="error-message" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="label">
+                    <FaMapMarkerAlt className="inline mr-2" />
+                    Address (Optional)
+                  </label>
+                  <Field
+                    as="textarea"
+                    name="address"
+                    rows="3"
+                    className="input-field"
+                    placeholder="123 Main St, City, State, PIN"
+                  />
+                  <ErrorMessage name="address" component="div" className="error-message" />
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn-primary w-full"
+                  disabled={!isValid || !dirty || isLoading || !emailVerified || (!!values.phone && !phoneVerified)}
+                >
+                  {isLoading ? 'Registering...' : 'Register'}
+                </button>
+              </Form>
+            )}
+          </Formik>
+
+          <div className="mt-6 text-center">
+            <p className="text-neutral-600">
+              Already have an account?{' '}
+              <Link to="/login" className="text-primary-500 hover:underline font-medium">
+                Login here
+              </Link>
+            </p>
           </div>
-
-          <div className="text-center">
-            <button
-              onClick={() => setStep(1)}
-              className="text-neutral-600 hover:text-primary-500 text-sm"
-            >
-              ← Back to form
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <h4 className="font-semibold text-blue-900 mb-2">📧 Check your inbox</h4>
-          <p className="text-sm text-blue-800">
-            If you don't receive the OTP within 2 minutes, check your spam folder or click resend.
-          </p>
         </div>
       </div>
     </div>

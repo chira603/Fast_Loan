@@ -32,7 +32,7 @@ router.post(
       res.json({
         success: true,
         message: 'OTP sent to your email address',
-        expiresIn: '5 minutes',
+        expiresIn: '1 minute',
       });
     } catch (error) {
       console.error('Error sending email OTP:', error);
@@ -72,7 +72,7 @@ router.post(
       res.json({
         success: true,
         message: 'OTP sent to your phone number',
-        expiresIn: '5 minutes',
+        expiresIn: '1 minute',
       });
     } catch (error) {
       console.error('Error sending SMS OTP:', error);
@@ -183,7 +183,7 @@ router.post(
       res.json({
         success: true,
         message: 'New OTP sent to your email address',
-        expiresIn: '5 minutes',
+        expiresIn: '1 minute',
       });
     } catch (error) {
       console.error('Error resending email OTP:', error);
@@ -223,7 +223,7 @@ router.post(
       res.json({
         success: true,
         message: 'New OTP sent to your phone number',
-        expiresIn: '5 minutes',
+        expiresIn: '1 minute',
       });
     } catch (error) {
       console.error('Error resending SMS OTP:', error);

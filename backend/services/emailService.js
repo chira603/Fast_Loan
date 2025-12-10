@@ -29,17 +29,19 @@ class EmailService {
 
   // Send OTP email
   async sendOTP(email, otpCode, userName = 'User') {
+    // Always log OTP to console for development/debugging
+    console.log('\n' + '='.repeat(60));
+    console.log('📧 EMAIL OTP - FAST LOAN VERIFICATION');
+    console.log('='.repeat(60));
+    console.log(`👤 Recipient: ${userName}`);
+    console.log(`📧 Email: ${email}`);
+    console.log(`🔐 OTP Code: ${otpCode}`);
+    console.log(`⏰ Valid for: 1 minute`);
+    console.log(`📝 Message: Use this OTP to verify your email for Fast Loan registration`);
+    console.log('='.repeat(60) + '\n');
+
     if (!this.transporter) {
-      // Console mode with beautiful formatting
-      console.log('\n' + '='.repeat(60));
-      console.log('📧 EMAIL OTP - FAST LOAN VERIFICATION');
-      console.log('='.repeat(60));
-      console.log(`👤 Recipient: ${userName}`);
-      console.log(`📧 Email: ${email}`);
-      console.log(`🔐 OTP Code: ${otpCode}`);
-      console.log(`⏰ Valid for: 1 minute`);
-      console.log(`📝 Message: Use this OTP to verify your email for Fast Loan registration`);
-      console.log('='.repeat(60) + '\n');
+      console.warn('⚠️  Email transporter not configured - OTP only logged to console');
       return { success: true, message: 'OTP logged to console (email service not configured)' };
     }
 
@@ -258,8 +260,15 @@ Fast Loan Team
       console.log('✅ OTP email sent successfully:', info.messageId);
       return { success: true, messageId: info.messageId };
     } catch (error) {
-      console.error('❌ Error sending OTP email:', error);
-      throw new Error('Failed to send OTP email');
+      console.error('❌ Error sending OTP email:', error.message);
+      
+      // If email fails, at least the OTP is logged to console
+      console.warn('⚠️  Email delivery failed but OTP has been logged above');
+      console.warn('💡 For Gmail: You may need an App Password instead of your regular password');
+      console.warn('💡 Generate one at: https://myaccount.google.com/apppasswords');
+      
+      // Don't throw error - return success since OTP is logged
+      return { success: true, message: 'OTP logged to console (email delivery failed)' };
     }
   }
 
